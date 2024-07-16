@@ -77,31 +77,10 @@ for div in divs:
         print(cout,new_title, 'https://www.imdb.com' + link_film)
         cout += 1
 
-
-
-# Khởi động ChromeDriver
-service_film_detail = Service(ChromeDriverManager().install())
-driver_film_detail = webdriver.Chrome(service=service_film_detail)
-
 # Truy cập trang web
 for i in link_film_acc:
     url_film = f'https://www.imdb.com{i}'
-    print(url_film)
-    driver_film_detail.get(url_film)
-# Đợi một chút để trang web tải xong
-    wait_film_detail = WebDriverWait(driver_film_detail, 10)
-    # lấy data cac phim
-    movie_elements_detail = driver_film_detail.find_elements(By.CSS_SELECTOR, '.ipc-metadata-list ipc-metadata-list--dividers-all ipc-metadata-list--base')
-# Extract HTML nội dung từ mỗi element
-    html_content_detail = []
-    for element_detail in movie_elements_detail:
-        html_content_detail.append(element_detail.get_attribute('outerHTML'))
-
-    # Join all HTML content into a single string
-    html_str_detail = ''.join(html_content_detail)
-# Đóng trình duyệt
-driver.quit()
-# Parse HTML with BeautifulSoup
-soup_detail = BeautifulSoup(html_str_detail, 'html.parser')
-divs_detail = soup_detail.find_all('div', class_='ipc-metadata-list-item__label')
-print(divs_detail)
+    r_content = requests.get(url_film)
+    soup_detail = BeautifulSoup(r_content.content, 'html.parser')
+    divs_detail = soup_detail.find_all('div', class_='ipc-metadata-list-item__label')
+    print(divs_detail)
