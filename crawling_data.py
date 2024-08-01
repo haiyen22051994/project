@@ -16,13 +16,11 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from bs4 import BeautifulSoup
 from psycopg2 import OperationalError
-# Đường dẫn đến ChromeDriver
-driver_path = 'path/to/chromedriver'
 # Khởi động ChromeDriver
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
 # Truy cập trang web
-url = 'https://www.imdb.com/search/title/?title=axel&title_type=feature&release_date=2022-01-01,2024-07-10&sort=year,desc'
+url = 'https://www.imdb.com/search/title/?title_type=feature&release_date=2022-01-01,2024-07-10&sort=year,desc'
 driver.get(url)
 # Đợi một chút để trang web tải xong
 wait = WebDriverWait(driver, 10)
@@ -33,7 +31,11 @@ def load_more_content(driver):
             # Cuộn xuống cuối trang
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(2)  # Đợi một chút để nội dung mới tải xong
-            
+            # Kiểm tra sự tồn tại của nút "More"
+            more_buttons = driver.find_elements(By.CLASS_NAME, 'ipc-see-more__text')
+            if not more_buttons:
+                print("Không còn nút 'More'. Dừng lại.")
+                break
             # Đợi cho đến khi nút "More" có thể click được
             more_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'ipc-see-more__text')))
             more_button.click()
@@ -71,7 +73,7 @@ for div in divs:
 # Thong tin ket noi
 hostname = 'localhost' 
 port = 5432
-database = 'da'
+database = 'postgres'
 username = 'da'
 password = 'da123@'
 # Ket noi den database
@@ -103,13 +105,13 @@ for i in link_film_acc:
     detail_release_date = soup_detail.find('li', {'data-testid': 'title-details-releasedate'})
     # release_date_first
     release_date_html = detail_release_date.find('a', class_='ipc-metadata-list-item__list-content-item')
-    release_date_str_full = release_date_html.text
+    release_date_str_full = release_date_html.text 
     release_date_str = release_date_str_full.split('(')[0].strip() 
     release_date_first = datetime.strptime(release_date_str, "%B %d, %Y")
     # Country of origin
     detail_country_origin = soup_detail.find('li', {'data-testid': 'title-details-origin'})
-    find_country_origin = detail_country_origin.find('a', class_='ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link')
-    country_origin = find_country_origin.text
+    find_country_origin = detail_country_origin.find('a', class_='ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link') if detail_country_origin else None
+    country_origin = find_country_origin.text if find_country_origin else None
     # IMDB Rating
     detail_rating = soup_detail.find('div', {'data-testid': 'hero-rating-bar__aggregate-rating__score'})
     rating_str = detail_rating.find('span',class_='sc-eb51e184-1 cxhhrI') if detail_rating else None
@@ -117,28 +119,30 @@ for i in link_film_acc:
     # Budget
     detail_budget = soup_detail.find('li', {'data-testid': 'title-boxoffice-budget'})
     budget_full = detail_budget.find('span',class_='ipc-metadata-list-item__list-content-item') if detail_budget else None
-    budget_str = budget_full.text
-    budget = budget_str.split('(')[0].strip() 
-    currency_budget = re.findall(r'\D+', budget)[0]
-    amount_bg = re.findall(r'\d+', budget_str)
-    amount_budget = int(''.join(amount_bg))
+    budget_str = budget_full.text if budget_full else None
+    budget = budget_str.split('(')[0].strip() if budget_str else None
+    currency_budget = re.findall(r'\D+', budget)[0] if budget else None
+    amount_bg = re.findall(r'\d+', budget_str) if budget_str else None
+    amount_budget = int(''.join(amount_bg)) if amount_bg else None
     # Genres
     detail_genres = soup_detail.find('div', {'data-testid': 'genres'})
-    genres_str = detail_genres.find('span',class_='ipc-chip__text') 
-    genres = genres_str.text
-    print(url_film, title_film_detail.text, release_date_first, country_origin, rating, budget, currency_budget, amount_budget , genres)
+    genres_str = detail_genres.find('span',class_='ipc-chip__text') if detail_genres else None
+    genres = genres_str.text if genres_str else None
+    # print(url_film, title_film_detail.text, release_date_first, country_origin, rating, budget, currency_budget, amount_budget , genres)
     # insert du lieu vao database
     insert_query = '''
-    insert into film (url_film, name_film, release_date, country_origin, rating, budget, currency_budget, amount_budget, genres)
+    insert into film (url_film, name_film, release_date_first, country_origin, rating, budget, currency_budget, amount_budget, genres)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     '''
     try:
         cursor.execute(insert_query,(url_film, name_film, release_date_first, country_origin, rating, budget, currency_budget, amount_budget, genres))
         # Lưu thay đổi
         connection.commit()
+        # print("Da luu data thanh cong")
     except Exception as e:
         print(f"SQL Error for {url_film}: {e}")
         connection.rollback()
+        
 # Dong connection
 cursor.close()
 connection.close()
