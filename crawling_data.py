@@ -20,7 +20,7 @@ from psycopg2 import OperationalError
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
 # Truy cập trang web
-url = 'https://www.imdb.com/search/title/?title_type=feature&release_date=2022-01-01,2024-07-10&sort=year,desc'
+url = 'https://www.imdb.com/search/title/?title_type=feature&release_date=2024-01-01,2024-12-31&sort=year,desc'
 driver.get(url)
 # Đợi một chút để trang web tải xong
 wait = WebDriverWait(driver, 10)
@@ -94,6 +94,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 }
 # Truy cập trang web va lay du lieu
+
 for i in link_film_acc:
     url_film = f'https://www.imdb.com{i}'
     r_content = requests.get(url_film, headers=headers)
