@@ -148,3 +148,5 @@ for i in link_film_acc:
 cursor.close()
 connection.close()
 print("Kết nối PostgreSQL đã đóng")
+
+
