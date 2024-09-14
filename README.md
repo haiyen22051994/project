@@ -1,4 +1,4 @@
-# hk2
+
 
 * git clone
 
@@ -11,7 +11,7 @@
 
   ```
   git add .
-  git commit -m '[23210288-PLAT] upload bt1 oop, update README'
+  git commit -m 'comment'
   ```
 * push
 
